@@ -16,7 +16,7 @@ namespace AzureTestingProject
             ////Dbcondatafetch();
             AzureWorkitemHelper testingAzureApi = new AzureWorkitemHelper();
             
-            testingAzureApi.CreateWorkitems("ParentProject", "this is new Workitem created");
+            testingAzureApi.CreateWorkitems(7964, 2, "Azure CRMnext Sync");
             
 
         }

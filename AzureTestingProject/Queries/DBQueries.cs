@@ -22,7 +22,9 @@ namespace AzureTestingProject
                         witModel.WorkitemType = WorkitemType.Project;
                     if (String.IsNullOrEmpty(String.Format("{0}", reader["Prj_ex5_8"])))
                     { witModel.iscreated = false; }
-                    else { witModel.iscreated = true; }
+                    else { witModel.iscreated = true;
+                        witModel.Workitemid = String.Format("{0}", reader["Prj_ex5_8"]);
+                    }
                     
                     witModels.Add(witModel);
 
@@ -69,7 +71,9 @@ namespace AzureTestingProject
 
                     if (String.IsNullOrEmpty(String.Format("{0}", reader["cas_ex6_5"])))
                     { witModel.iscreated = false; }
-                    else { witModel.iscreated = true; }
+                    else { witModel.iscreated = true;
+                        witModel.Workitemid = String.Format("{0}", reader["cas_ex6_5"]);
+                    }
                     
                     
 
@@ -118,7 +122,9 @@ namespace AzureTestingProject
                             witinfolists.Add(witModel);
                         if (String.IsNullOrEmpty(String.Format("{0}", reader["Prm_ex2_54"])))
                         { witModel.iscreated = false; }
-                        else { witModel.iscreated = true; }
+                        else { witModel.iscreated = true;
+                            witModel.Workitemid = String.Format("{0}", reader["Prm_ex2_54"]);
+                        }
                         
 
                         
@@ -153,6 +159,7 @@ namespace AzureTestingProject
                     else
                     {
                         witModel.iscreated = true;
+                        witModel.Workitemid = String.Format("{0}", reader["Req_ex4_1"]);
                     }
                     witModels.Add(witModel);
 
