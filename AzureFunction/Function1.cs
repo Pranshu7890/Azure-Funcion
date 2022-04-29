@@ -22,15 +22,11 @@ namespace AzureFunction
 
         [FunctionName("Function1")]
         public static void Run(
-            [HttpTrigger(AuthorizationLevel.Function, "get", "post", Route = null)] HttpRequestMessage req,
+            [HttpTrigger(AuthorizationLevel.Function, "get", "post", Route = "Azurefunction")] HttpRequestMessage req,
             ILogger log)
         {
-            SqlConnection cnn = new SqlConnection(@"data source=192.168.0.82;initial catalog=MY_April2022;password=abc123;persist security info=True;user id=crmnext;packet size=4096;enlist=false");
-            
-            List<WitModel> Witlist= AzureWorkitemHelper.wittotalinfo(7964, 2, "Azure CRMnext Sync", cnn);
             log.LogInformation($"Webhook was triggered!");
-            HttpContent requestContent = req.Content;
-           
+            HttpContent requestContent = req.Content;  
             string jsonContent = requestContent.ReadAsStringAsync().Result;
             dynamic data = JObject.Parse(jsonContent);
            string wid= Convert.ToString(data["resource"]["workItemId"]);
@@ -53,7 +49,8 @@ namespace AzureFunction
             else
             {
                 BoardColumn = AzureWorkitemHelper.getBoradinfo(Convert.ToInt32(wid));
-            }
+           }
+
             string BoardColumnDone = null;
             int statusid=0;
             if (data["resource"]?["fields"]?["System.BoardColumnDone"]?["newValue"]==null)
@@ -61,24 +58,21 @@ namespace AzureFunction
                 BoardColumnDone = "False";
             }
             else { BoardColumnDone = Convert.ToString(data["resource"]["fields"]["System.BoardColumnDone"]["newValue"]); }
-
-            foreach (var wit in Witlist)
-            {
-                if ((wit.iscreated == true) && (wit.Workitemid == wid) && (wit.WorkitemType == WorkitemType.Req))
-                {
-                    if (BoardColumn == "Backlog")
+            log.LogInformation(BoardColumn+" "+BoardColumnDone);
+            
+        if (BoardColumn == "Backlog")
                     {
-                        statusid = 46;
+                        statusid = 66;
                     }
                     else if ((BoardColumn == "BA") && (BoardColumnDone == "False"))
                     {
-                        statusid = 271;
+                        statusid = 62;
                     }
                     else if ((BoardColumn == "BA") && (BoardColumnDone == "True"))
                     {
-                        statusid = 79;
+                        statusid = 100003;
                     }
-                    else if ((BoardColumn == "Dev") && (BoardColumnDone == "False"))
+                    else if ((BoardColumn == "Dev") && (BoardColumnDone == "False")&&(AzureWorkitemHelper.getQAfailure(Convert.ToInt32(wid))==false))
                     {
                         statusid = 77;
                     }
@@ -86,33 +80,42 @@ namespace AzureFunction
                     {
                         statusid = 78;
                     }
+                    else if ((BoardColumn == "QA") && (BoardColumnDone == "False"))
+                    {
+                        statusid = 129;
+                    }
                     else if ((BoardColumn == "QA") && (BoardColumnDone == "True"))
                     {
                         statusid = 73;
                     }
-                    else if ((BoardColumn == "QA") && (BoardColumnDone == "True"))
+                    else if (AzureWorkitemHelper.getQAfailure(Convert.ToInt32(wid)))
                     {
-                        statusid = 129;
+                        statusid = 420;
                     }
+                   
                     else if (BoardColumn == "Closed") { statusid = 31; }
-
-
-                    SqlCommand command = new SqlCommand(string.Format(@"update IssueRequirementMaster set statusCodeID= '{0}' where ItemId={1}", statusid, wit.WitId), cnn);
-                    command.ExecuteNonQuery();
-
-
-
+                    else if (AzureWorkitemHelper.getQAfailure(Convert.ToInt32(wid))==false) { statusid = 78; }
+                    log.LogInformation(Convert.ToString(statusid));
+            string widquery = string.Format(@"select Req_ex4_Id from req_ex4 where req_ex4_1='{0}')", wid);
+            string myid;
+            using (System.Data.DataTableReader reader = QueryExecuter.ReadQuery(widquery))
+            {
+                while (reader.Read())
+                {
+                    if (reader.HasRows) {
+                        myid=String.Format("{0}", reader["Req_ex4_Id"]);
+                        string command = string.Format(@"update IssueRequirementMaster set statusCodeID= '{0}' where ItemId={1}", statusid, myid);
+                        QueryExecuter.updateQuery(command);
+                    }
+                    else
+                    {
+                        log.LogInformation("item is not created");
+                    }
+                    
                 }
-
-
-
             }
-
-
-
-
-
-
+                    
+                    
         }
     }
 }

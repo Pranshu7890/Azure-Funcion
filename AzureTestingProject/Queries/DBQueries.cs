@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Data.SqlClient;
 using System.Text;
 
@@ -7,10 +8,10 @@ namespace AzureTestingProject
 {
     static class DBQueries
     {
-        public static void QueryProject(List<WitModel> witModels, int projectid, int ownerId, SqlConnection cnn)
+        public static void QueryProject(List<WitModel> witModels, int projectid, int ownerId)
         {
-            SqlCommand command = new SqlCommand(string.Format(@"Select project.ProjectName, project.ProjectID,project.LastModifiedOn,Prj_ex5.Prj_ex5_8 from project INNER JOIN Prj_ex5 on Prj_ex5.Prj_ex5_ID=project.ProjectID where project.ProjectID={0} and project.OwnerId={1}", projectid, ownerId), cnn);
-            using (SqlDataReader reader = command.ExecuteReader())
+            string Query = string.Format(@"Select project.ProjectName,project.Detail ,project.ProjectID,project.LastModifiedOn,Prj_ex5.Prj_ex5_8 from project INNER JOIN Prj_ex5 on Prj_ex5.Prj_ex5_ID=project.ProjectID where project.ProjectID={0} and project.OwnerId={1}", projectid, ownerId);
+            using (DataTableReader reader = QueryExecuter.ReadQuery(Query))
             {
                 while (reader.Read())
                 {
@@ -20,6 +21,7 @@ namespace AzureTestingProject
                         witModel.WitId = string.Format("{0}", reader["ProjectID"]);
                         witModel.WitLastmodified = String.Format("{0}", reader["LastModifiedOn"]);
                         witModel.WorkitemType = WorkitemType.Project;
+                    witModel.Description = string.Format("{0}", reader["Detail"]);
                     if (String.IsNullOrEmpty(String.Format("{0}", reader["Prj_ex5_8"])))
                     { witModel.iscreated = false; }
                     else { witModel.iscreated = true;
@@ -33,14 +35,14 @@ namespace AzureTestingProject
                 }
             }
         }
-        public static List<string> fetchworkidEpic(int relatedto, string projectworkitemid, List<WitModel> witModels, List<String> Wid, SqlConnection cnn)
+        public static List<string> fetchworkidEpic(int relatedto, List<WitModel> witModels, List<String> Wid)
         {
             foreach (var witmodel in witModels)
             {
                 if (witmodel.WorkitemType == WorkitemType.Project)
                 {
-                    SqlCommand command = new SqlCommand(string.Format(@"select Prj_ex5_8 from Prj_ex5 where Prj_ex5_Id={0}", relatedto), cnn);
-                    using (SqlDataReader reader = command.ExecuteReader())
+                    String Commnad = string.Format(@"select Prj_ex5_8 from Prj_ex5 where Prj_ex5_Id={0}", relatedto);
+                    using (DataTableReader reader = QueryExecuter.ReadQuery(Commnad))
                     {
                         while (reader.Read())
                         {
@@ -54,10 +56,10 @@ namespace AzureTestingProject
         }
 
 
-        public static void QueryBug(List<WitModel> witModels, int projectid, int ownerId, SqlConnection cnn, string relatedtoname)
+        public static void QueryBug(List<WitModel> witModels, int projectid, int ownerId, string relatedtoname)
         {
-            SqlCommand command = new SqlCommand(string.Format(@"select cases.Subject,cases.CaseId,cases.LastModifiedOn,cas_ex6.cas_ex6_5  from cases INNER JOIN cas_ex6 On cases.CaseId=cas_ex6_Id where cases.RelatedToName='{0}' and cases.OwnerID={1}", relatedtoname, ownerId, projectid), cnn);
-            using (SqlDataReader reader = command.ExecuteReader())
+            String Command = string.Format(@"select cases.Subject,cases.CaseId,cases.Details,cases.LastModifiedOn,cas_ex6.cas_ex6_5, cas_ex2.Cas_ex2_2 from cases INNER JOIN cas_ex6 On cases.CaseId=cas_ex6.cas_ex6_Id INNER JOIN cas_ex2 on cas_ex2.cas_ex2_Id=cas_ex6.cas_ex6_Id   where cas_ex2_2={2}", relatedtoname, ownerId, projectid);
+            using (DataTableReader reader = QueryExecuter.ReadQuery(Command))
             {
                 while (reader.Read())
                 {
@@ -66,6 +68,7 @@ namespace AzureTestingProject
                     witModel.Witname = String.Format("{0}", reader["Subject"]);
                     witModel.WitId = string.Format("{0}", reader["CaseId"]);
                     witModel.WitLastmodified = String.Format("{0}", reader["LastModifiedOn"]);
+                    witModel.Description = string.Format("{0}", reader["Details"]);
                     witModel.WorkitemType = WorkitemType.Bug;
                         witModels.Add(witModel);
 
@@ -81,14 +84,14 @@ namespace AzureTestingProject
             }
 
         }
-        public static List<string> fetchworkidProject(int relatedto, string projectworkitemid, List<WitModel> witModels, List<String> Wid, SqlConnection cnn)
+        public static List<string> fetchworkidProject(int relatedto, List<WitModel> witModels, List<String> Wid)
         {
             foreach (var witmodel in witModels)
             {
                 if (witmodel.WorkitemType == WorkitemType.Module)
                 {
-                    SqlCommand command = new SqlCommand(string.Format(@"select Prj_ex5_8 from Prj_ex5 where Prj_ex5_Id={0}", relatedto), cnn);
-                    using (SqlDataReader reader = command.ExecuteReader())
+                    String command = string.Format(@"select Prj_ex5_8 from Prj_ex5 where Prj_ex5_Id={0}", relatedto);
+                    using (DataTableReader reader = QueryExecuter.ReadQuery(command))
                     {
                         while (reader.Read())
                         {
@@ -100,12 +103,12 @@ namespace AzureTestingProject
             }
             return Wid;
         }
-        public static void QueryFeature(List<WitModel> witinfolists, String RelatedTo, int OwnerId, SqlConnection cnn)
+        public static void QueryFeature(List<WitModel> witinfolists, String RelatedTo, int OwnerId)
         {
 
 
-            SqlCommand command = new SqlCommand(string.Format(@"select ProjectModule.Subject, ProjectModule.CustomObjectId,ProjectModule.LastModifiedOn ,Prm_ex2.Prm_ex2_54 from ProjectModule INNER JOIN Prm_ex2 On ProjectModule.CustomObjectId=Prm_ex2.Prm_ex2_Id  where ProjectModule.RelatedToName='{0}' and ProjectModule.OwnerId={1}", RelatedTo, OwnerId), cnn);
-            using (SqlDataReader reader = command.ExecuteReader())
+            string Command = string.Format(@"select ProjectModule.Subject,ProjectModule.Detail, ProjectModule.CustomObjectId,ProjectModule.LastModifiedOn ,Prm_ex2.Prm_ex2_54 from ProjectModule INNER JOIN Prm_ex2 On ProjectModule.CustomObjectId=Prm_ex2.Prm_ex2_Id  where ProjectModule.RelatedToName='{0}' and ProjectModule.OwnerId={1}", RelatedTo, OwnerId);
+            using (DataTableReader reader = QueryExecuter.ReadQuery(Command))
             {
                 if (reader.HasRows)
                 {
@@ -115,15 +118,15 @@ namespace AzureTestingProject
                             WitModel witModel = new WitModel();
                         witModel.Witname = string.Format("{0}", reader["Subject"]);
                         witModel.WitId = string.Format("{0}", reader["CustomObjectId"]);
-                        witModel.WitLastmodified = String.Format("{0}", reader["LastModifiedOn"]);
+                        witModel.WitLastmodified = string.Format("{0}", reader["LastModifiedOn"]);
                         witModel.WorkitemType = WorkitemType.Module;
-                        
-                            
-                            witinfolists.Add(witModel);
-                        if (String.IsNullOrEmpty(String.Format("{0}", reader["Prm_ex2_54"])))
+                        witModel.Description= string.Format("{0}", reader["Detail"]);
+
+                        witinfolists.Add(witModel);
+                        if (string.IsNullOrEmpty(string.Format("{0}", reader["Prm_ex2_54"])))
                         { witModel.iscreated = false; }
                         else { witModel.iscreated = true;
-                            witModel.Workitemid = String.Format("{0}", reader["Prm_ex2_54"]);
+                            witModel.Workitemid = string.Format("{0}", reader["Prm_ex2_54"]);
                         }
                         
 
@@ -134,11 +137,10 @@ namespace AzureTestingProject
 
         }
 
-        public static void QueryRequirement(List<WitModel> witModels, int RelatedTo, int OwnerId, SqlConnection cnn, string relatedtoname)
+        public static void QueryRequirement(List<WitModel> witModels, int RelatedTo, int OwnerId, string relatedtoname)
         {
-
-            SqlCommand command = new SqlCommand(string.Format(@"select IssueRequirementMaster.Subject, IssueRequirementMaster.ItemId , IssueRequirementMaster.LastModifiedOn , Req_ex4.Req_ex4_1 from IssueRequirementMaster INNER JOIN Req_ex4 ON IssueRequirementMaster.ItemId=Req_ex4.Req_ex4_Id where IssueRequirementMaster.RelatedToName='{0}' and IssueRequirementMaster.OwnerID={1}", relatedtoname, OwnerId, RelatedTo), cnn);
-            using (SqlDataReader reader = command.ExecuteReader())
+string Command=string.Format(@"select IssueRequirementMaster.Subject,IssueRequirementMaster.Details ,IssueRequirementMaster.ItemId , IssueRequirementMaster.LastModifiedOn , Req_ex4.Req_ex4_1, Req_ex1.Req_ex1_84 from IssueRequirementMaster INNER JOIN Req_ex4 ON IssueRequirementMaster.ItemId=Req_ex4.Req_ex4_Id INNER JOIN Req_ex1 ON Req_ex4.Req_ex4_Id=Req_ex1.Req_ex1_Id where Req_ex1.Req_ex1_84={2} ", relatedtoname, OwnerId, RelatedTo);
+            using (DataTableReader reader = QueryExecuter.ReadQuery(Command))
             {
                 while (reader.Read())
                 {
@@ -148,9 +150,9 @@ namespace AzureTestingProject
                     witModel.WitId = string.Format("{0}", reader["ItemId"]);
                     witModel.WitLastmodified = String.Format("{0}", reader["LastModifiedOn"]);
                     witModel.WorkitemType = WorkitemType.Req;
-                   
-                        
-                        
+                    witModel.Description = string.Format("{0}", reader["Details"]);
+
+
 
                     if (String.IsNullOrEmpty(String.Format("{0}", reader["Req_ex4_1"])))
                     {
@@ -171,7 +173,7 @@ namespace AzureTestingProject
 
 
 
-        public static List<String> Fetchworkidcasaz(List<WitModel> witModels, string v, List<string> workitemscas, SqlConnection cnn)
+        public static List<String> Fetchworkidcasaz(List<WitModel> witModels, string v, List<string> workitemscas)
         {
             List<string> module = new List<string>();
 
@@ -179,8 +181,8 @@ namespace AzureTestingProject
             {
                 if (cases.WorkitemType == WorkitemType.Bug)
                 {
-                  SqlCommand commandouter = new SqlCommand(String.Format(@"select Cas_ex4_89 from Cas_ex4 where Cas_ex4_Id={0}", cases.WitId), cnn);
-                    using (SqlDataReader reader = commandouter.ExecuteReader())
+                    String Command = String.Format(@"select Cas_ex4_89 from Cas_ex4 where Cas_ex4_Id={0}", cases.WitId);
+                    using (DataTableReader reader = QueryExecuter.ReadQuery(Command))
                     {
                         while (reader.Read())
                         {
@@ -197,8 +199,8 @@ namespace AzureTestingProject
                     module[i] = "NULL";
                 }
 
-                SqlCommand commandinner = new SqlCommand(String.Format(@"select Prm_ex2_54 from Prm_ex2 where Prm_ex2_Id= {0}", String.Format("{0}", module[i])), cnn);
-                using (SqlDataReader reader = commandinner.ExecuteReader())
+                string Command = String.Format(@"select Prm_ex2_54 from Prm_ex2 where Prm_ex2_Id= {0}", String.Format("{0}", module[i]));
+                using (DataTableReader reader = QueryExecuter.ReadQuery(Command))
                 {
                     while (reader.Read())
                     {
@@ -210,7 +212,7 @@ namespace AzureTestingProject
 
             return workitemscas;
         }
-        public static List<string> Fetchworkidreqaz(List<WitModel> witModels, string v, List<string> workitemsreq, SqlConnection cnn)
+        public static List<string> Fetchworkidreqaz(List<WitModel> witModels, string v, List<string> workitemsreq)
         {
             List<string> reqid = new List<string>();
 
@@ -221,8 +223,8 @@ namespace AzureTestingProject
             {
                 if (requirement.WorkitemType == WorkitemType.Req) 
                 {
-                    SqlCommand commandouter = new SqlCommand(String.Format(@"select Req_ex2_82  from Req_ex2 where Req_ex2_Id= {0} ", requirement.WitId), cnn);
-                    using (SqlDataReader reader = commandouter.ExecuteReader())
+                    string commandouter = String.Format(@"select Req_ex2_82  from Req_ex2 where Req_ex2_Id= {0} ", requirement.WitId);
+                    using (DataTableReader reader = QueryExecuter.ReadQuery(commandouter))
                     {
                         while (reader.Read())
                         { 
@@ -243,8 +245,8 @@ namespace AzureTestingProject
                     reqid[i] = "NULL";
                 }
 
-                SqlCommand commandinner = new SqlCommand(String.Format(@"select Prm_ex2_54 from Prm_ex2 where Prm_ex2_Id= {0}", String.Format("{0}", reqid[i])), cnn);
-                using (SqlDataReader reader = commandinner.ExecuteReader())
+                string command = String.Format(@"select Prm_ex2_54 from Prm_ex2 where Prm_ex2_Id= {0}", String.Format("{0}", reqid[i]));
+                using (DataTableReader reader = QueryExecuter.ReadQuery(command))
                 {
                     while (reader.Read())
                     {
@@ -257,13 +259,6 @@ namespace AzureTestingProject
         }
     }
     
-
-    //    public static void populateOffsetDate(string BugOffset,String ReqOffset,SqlConnection cnn)
-    //    {
-    //        SqlCommand Updateoffset = new SqlCommand(String.Format(@"update  Prj_ex5 set Prj_ex5_8={0},Prj_ex5_9={1} where Prj_ex5_Id={2}",BugOffset,ReqOffset),cnn);
-    //        Updateoffset.ExecuteNonQuery();
-    //    }
-    //}
 
 
 }
